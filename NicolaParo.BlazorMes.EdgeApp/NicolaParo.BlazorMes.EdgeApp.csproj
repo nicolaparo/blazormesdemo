@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.10.0" />
+    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.41.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NicolaParo.BlazorMes.Entities\NicolaParo.BlazorMes.Entities.csproj" />
+  </ItemGroup>
+
+</Project>

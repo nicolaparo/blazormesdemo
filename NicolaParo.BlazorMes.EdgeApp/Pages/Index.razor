@@ -1,0 +1,154 @@
+﻿@page "/"
+@inject FactorySensors sensors
+@implements IDisposable
+
+<div class="d-flex flex-column p-4">
+    <div class="row">
+        <div class="col">
+            <div class="mb-3">
+                <label>Machine Name</label>
+                <div class="d-flex">
+                    @if (sensors.CanSetProductionOrder())
+                    {
+                        <input type="text" class="form-control-lg w-100" @bind="@sensors.MachineName" />
+                    }
+                    else
+                    {
+                        <input type="text" readonly disabled class="form-control-lg w-100" value="@sensors.MachineName" />
+                    }
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Production Order</label>
+                <div class="d-flex">
+                    @if (sensors.CanSetProductionOrder())
+                    {
+                        <input type="text" class="form-control-lg w-100" @bind="@sensors.ProductionOrder" />
+                    }
+                    else
+                    {
+                        <input type="text" readonly disabled class="form-control-lg w-100" value="@sensors.ProductionOrder" />
+                    }
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Set Items per Minute</label>
+                <div class="d-flex">
+                    <button type="button" class="btn btn-primary btn-lg" @onclick="DecreaseItemsPerSecond">-</button>
+                    <input type="text" readonly class="form-control-lg mx-2 w-100" value="@sensors.ItemsPerMinute" />
+                    <button type="button" class="btn btn-primary btn-lg" @onclick="IncreaseItemsPerSecond">+</button>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Set Fan Speed (rpm)</label>
+                <div class="d-flex">
+                    <button type="button" class="btn btn-primary btn-lg" @onclick="DecreaseFanSpeed">-</button>
+                    <input type="text" readonly class="form-control-lg mx-2 w-100" value="@sensors.FanSpeedRpm" />
+                    <button type="button" class="btn btn-primary btn-lg" @onclick="IncreaseFanSpeed">+</button>
+                </div>
+            </div>
+            <div class="mb-3 w-100">
+                <div class="w-100">
+                    <button type="button" class="btn btn-danger m-auto d-block" style="min-width: 200px; min-height: 200px; border-radius: 100px" @onclick="EmergencyStopAsync">
+                        EMERGENCY STOP
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="mb-3">
+                <label>Items per Minute</label>
+                <div class="d-flex">
+                    <input type="text" readonly class="form-control-lg w-100" value="@((int)sensors.CurrentItemsPerMinute)" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Fan Speed</label>
+                <div class="d-flex">
+                    <input type="text" readonly class="form-control-lg w-100" value="@((int)sensors.CurrentFanSpeedRpm)" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Temperature °C</label>
+                <div class="d-flex">
+                    <input type="text" readonly class="@(sensors.IsSafeTemperature() ? "bg-success" : sensors.IsDangerTemperature() ? "bg-danger" : "")  form-control-lg w-100" value="@(sensors.TemperatureCelsius.ToString("0.00"))" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Consumption KW</label>
+                <div class="d-flex">
+                    <input type="text" readonly class="form-control-lg w-100" value="@(sensors.ConsumptionKW.ToString("0.00"))" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="row">
+                    <div class="col">
+                        <label>Total</label>
+                        <div class="d-flex">
+                            <input type="text" readonly class="form-control-lg w-100" value="@((int)sensors.TotalPieces)" />
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label>Good</label>
+                        <div class="d-flex">
+                            <input type="text" readonly class="form-control-lg w-100" value="@((int)sensors.TotalGoods)" />
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label>Rejects</label>
+                        <div class="d-flex">
+                            <input type="text" readonly class="form-control-lg w-100" value="@((int)sensors.TotalRejects)" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            sensors.OnUpdated += OnSensorsUpdated;
+        }
+    }
+
+    private async Task EmergencyStopAsync()
+    {
+        await sensors.EmergencyStopAsync();
+    }
+
+    private void DecreaseItemsPerSecond()
+    {
+        if (sensors.ItemsPerMinute > 0)
+            sensors.ItemsPerMinute = sensors.ItemsPerMinute - 5;
+    }
+    private void IncreaseItemsPerSecond()
+    {
+        if (sensors.ItemsPerMinute < 300)
+            sensors.ItemsPerMinute = sensors.ItemsPerMinute + 5;
+    }
+    private void DecreaseFanSpeed()
+    {
+        if (sensors.FanSpeedRpm > 0)
+            sensors.FanSpeedRpm -= 125;
+    }
+    private void IncreaseFanSpeed()
+    {
+        if (sensors.FanSpeedRpm < 5000)
+            sensors.FanSpeedRpm += 125;
+    }
+
+    private async Task OnSensorsUpdated()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        sensors.OnUpdated -= OnSensorsUpdated;
+    }
+}
