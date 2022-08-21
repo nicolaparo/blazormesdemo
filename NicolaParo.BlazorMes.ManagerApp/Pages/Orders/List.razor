@@ -1,0 +1,58 @@
+﻿@page "/orders"
+@using NicolaParo.BlazorMes.Entities.Models
+@using NicolaParo.BlazorMes.ManagerApp.Services
+
+@inject DataRepositoryService service;
+@inject BrowserInterop browserInterop;
+
+@if (orders is null)
+{
+    <em>Loading...</em>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Machine</th>
+                <th>Order Id</th>
+                <th>Customer</th>
+                <th>Target Items</th>
+                <th>Goods / Rejects</th>
+                <th>Waste</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in orders)
+            {
+                <tr>
+                    <td>@order.MachineName</td>
+                    <td>@order.Id</td>
+                    <td>@order.CustomerName</td>
+                    <td>@order.ItemsCount</td>
+                    <td>@order.Goods / @order.Rejects</td>
+                    <td>@((order.Rejects * 100f / (order.Goods + order.Rejects)).ToString("0.00")) %</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<button type="button" class="btn btn-primary" @onclick="OnCreateOrderClickedAsync"
+    style="width: 120px; height: 120px; right: 20px; bottom: 20px; position: fixed; border-radius: 50%">
+    <i class="oi oi-plus"></i>
+</button>
+
+@code {
+    private ProductionOrder[] orders;
+
+    protected override async Task OnInitializedAsync()
+    {
+        orders = await service.ListOrdersAsync();
+    }
+
+    private async Task OnCreateOrderClickedAsync()
+    {
+        await browserInterop.NavigateToAsync("/orders/new");
+    }
+}

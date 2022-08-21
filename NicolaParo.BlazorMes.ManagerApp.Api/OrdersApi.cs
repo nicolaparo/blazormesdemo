@@ -18,7 +18,6 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
 {
     public class OrdersApi
     {
-        private readonly ILogger log;
         private readonly TableClient tableClient;
 
         public OrdersApi()
@@ -52,7 +51,7 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
 
             await tableClient.AddEntityAsync(new ProductionOrderEntity(productionOrder));
 
-            return new OkObjectResult(productionOrder.Id);
+            return Responses.Ok(productionOrder.Id);
         }
 
         [FunctionName(nameof(UpdateOrderAsync))]
@@ -74,7 +73,7 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
 
             await tableClient.UpdateEntityAsync(new ProductionOrderEntity(productionOrder), ETag.All);
 
-            return new OkObjectResult(productionOrder.Id);
+            return Responses.Ok(productionOrder.Id);
         }
 
         [FunctionName(nameof(DeleteOrderAsync))]
@@ -84,7 +83,7 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
                 partitionKey: "", rowKey: ProductionOrderEntity.ComputeRowKey(machineName, orderId)
             );
 
-            return new NoContentResult();
+            return Responses.NoContent();
         }
 
         [FunctionName(nameof(GetOrdersAsync))]
@@ -95,7 +94,7 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
                 .Select(x => x.Values)
                 .ToArrayAsync();
 
-            return new OkObjectResult(entities.SelectMany(x => x).Select(x => ((ProductionOrder)x) with { }));
+            return Responses.Ok(entities.SelectMany(x => x).Select(x => ((ProductionOrder)x) with { }));
         }
 
         [FunctionName(nameof(GetOrderByIdAsync))]
@@ -104,7 +103,7 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
             var entity = (await tableClient.GetEntityAsync<ProductionOrderEntity>(
                 partitionKey: "", rowKey: ProductionOrderEntity.ComputeRowKey(machineName, orderId)
             )).Value;
-            return new OkObjectResult(((ProductionOrder)entity) with { });
+            return Responses.Ok(((ProductionOrder)entity) with { });
         }
 
     }

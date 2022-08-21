@@ -1,12 +1,7 @@
-﻿namespace NicolaParo.BlazorMes.EdgeApp
-{
-    public enum AlarmType
-    {
-        EmergencyPushButtonPressed,
-        TemperatureAlertStart,
-        TemperatureAlertEnd,
-    }
+﻿using NicolaParo.BlazorMes.Entities.Payloads;
 
+namespace NicolaParo.BlazorMes.EdgeApp
+{
     public class FactorySensors
     {
         private string productionOrder;
@@ -49,7 +44,7 @@
 
         public event Func<Task> OnUpdated;
         public event Func<AlarmType, Task> OnAlarm;
-        public event Func<Task> OnNewProductionOrder;
+        public event Func<EventType, Task> OnEvent;
 
         public bool IsSafeTemperature()
         {
@@ -60,6 +55,7 @@
             return TemperatureCelsius <= 10 || TemperatureCelsius >= 50;
         }
         private bool wasInDanger;
+        private bool wasRunning;
 
         public async Task UpdateAsync()
         {
@@ -69,8 +65,19 @@
             if (IsRunning() && productionOrderSet)
             {
                 productionOrderSet = false;
-                if (OnNewProductionOrder != null)
-                    await OnNewProductionOrder.Invoke();
+                if (OnEvent != null)
+                    await OnEvent.Invoke(EventType.NewProductionOrder);
+            }
+
+            if (IsRunning() && !wasRunning)
+            {
+                if (OnEvent != null)
+                    await OnEvent.Invoke(EventType.ProductionStarted);
+            }
+            if (!IsRunning() && wasRunning)
+            {
+                if (OnEvent != null)
+                    await OnEvent.Invoke(EventType.ProductionHalted);
             }
 
             if (IsDangerTemperature() && !wasInDanger)
@@ -102,6 +109,8 @@
 
             if (OnUpdated is not null)
                 await OnUpdated.Invoke();
+
+            wasRunning = IsRunning();
 
         }
 

@@ -1,0 +1,36 @@
+﻿@page "/orders/new"
+@using NicolaParo.BlazorMes.Entities.Models
+@using NicolaParo.BlazorMes.ManagerApp.Components
+@using NicolaParo.BlazorMes.ManagerApp.Services
+
+@inject BrowserInterop browserInterop;
+@inject DataRepositoryService repository;
+
+<div class="mb-3">
+    <label>Machine Name</label>
+    <input type="text" class="form-control" @bind="machineName" />
+</div>
+<OrderDataEditor ProductionOrder="productionOrderData" />
+<div class="mb-3">
+    <button type="button" class="btn btn-secondary" @onclick="() => browserInterop.NavigateBackAsync()">
+        Cancel
+    </button>
+    <button type="button" class="btn btn-primary" @onclick="OnCreateClickedAsync">
+        Create
+    </button>
+</div>
+
+@code {
+    private string machineName;
+    private ProductionOrderData productionOrderData = new();
+
+    private async Task OnCreateClickedAsync()
+    {
+        var orderId = await repository.CreateOrderAsync(machineName, productionOrderData);
+        await browserInterop.NavigateToAsync($"/orders/{machineName}/{orderId}/details", replace: true);
+    }
+    private async Task OnCancelClickedAsync()
+    {
+        await browserInterop.NavigateBackAsync();
+    }
+}

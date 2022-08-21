@@ -1,6 +1,7 @@
 ﻿using Azure;
 using Azure.Data.Tables;
 using NicolaParo.BlazorMes.Entities.Models;
+using NicolaParo.BlazorMes.Entities.Payloads;
 
 namespace NicolaParo.BlazorMes.Entities
 {

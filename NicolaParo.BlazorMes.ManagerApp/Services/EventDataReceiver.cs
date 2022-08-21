@@ -6,9 +6,9 @@ namespace NicolaParo.BlazorMes.ManagerApp.Services
     {
         private readonly WebPubSubClient pubsubclient;
 
-        public EventDataReceiver(string negotiatorFunctionUri)
+        public EventDataReceiver(string negotiatorFunctionUri, string accesskey = null)
         {
-            pubsubclient = new WebPubSubClient(negotiatorFunctionUri);
+            pubsubclient = new WebPubSubClient(negotiatorFunctionUri, accesskey);
             pubsubclient.OnMessage += HandleMessageAsync;
         }
 

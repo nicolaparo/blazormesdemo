@@ -8,11 +8,13 @@ namespace NicolaParo.BlazorMes.ManagerApp.Services
     public class WebPubSubClient : IDisposable
     {
         private readonly string negotiatorFunctionUri;
+        private readonly string accesskey;
         private readonly ClientWebSocket webSocket;
 
-        public WebPubSubClient(string negotiatorFunctionUri)
+        public WebPubSubClient(string negotiatorFunctionUri, string accesskey = null)
         {
             this.negotiatorFunctionUri = negotiatorFunctionUri;
+            this.accesskey = accesskey;
             webSocket = new ClientWebSocket();
         }
 
@@ -25,6 +27,10 @@ namespace NicolaParo.BlazorMes.ManagerApp.Services
         {
             var httpClient = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, negotiatorFunctionUri);
+
+            if (accesskey is not null)
+                request.Headers.Add("x-functions-key", accesskey);
+
             var response = await httpClient.SendAsync(request, cancellationToken);
             var result = await response.Content.ReadAsJsonAsync<JsonElement>(cancellationToken);
             var webSocketUri = result.GetProperty("url").GetString();

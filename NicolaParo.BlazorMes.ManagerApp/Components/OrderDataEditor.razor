@@ -1,0 +1,17 @@
+﻿@using NicolaParo.BlazorMes.Entities.Models
+
+<div class="mb-3">
+    <label>Customer Name</label>
+    <input type="text" class="form-control" @bind="ProductionOrder.CustomerName" />
+</div>
+<div class="mb-3">
+    <label>Target # Items</label>
+    <input type="number" min="0" step="1" class="form-control" @bind="ProductionOrder.ItemsCount" />
+</div>
+
+@code {
+
+    [Parameter]
+    public ProductionOrderData ProductionOrder { get; set; }
+
+}

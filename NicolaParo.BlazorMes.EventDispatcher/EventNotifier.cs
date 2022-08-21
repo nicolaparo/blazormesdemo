@@ -21,6 +21,7 @@ namespace NicolaParo.BlazorMes.EventDispatcher
             [ServiceBusTrigger("%ServiceBusTopicName%", "%ServiceBusNotifierSubscriptionName%", Connection = "ServiceBusConnectionString")] string rawpayload,
             [WebPubSub(Hub = "alarms", Connection = "WebPubSubConnectionString")] IAsyncCollector<WebPubSubAction> alarms,
             [WebPubSub(Hub = "telemetry", Connection = "WebPubSubConnectionString")] IAsyncCollector<WebPubSubAction> telemetry,
+            [WebPubSub(Hub = "events", Connection = "WebPubSubConnectionString")] IAsyncCollector<WebPubSubAction> events,
             ILogger log)
         {
             var payload = Payloads.DeserializePayload(rawpayload);
@@ -37,6 +38,12 @@ namespace NicolaParo.BlazorMes.EventDispatcher
             {
                 await telemetry.AddAsync(WebPubSubAction.CreateSendToAllAction(rawpayload));
                 await telemetry.FlushAsync();
+            }
+            else if(payload is EventPayload)
+            {
+                await events.AddAsync(WebPubSubAction.CreateSendToAllAction(rawpayload));
+                await events.FlushAsync();
+
             }
         }
     }

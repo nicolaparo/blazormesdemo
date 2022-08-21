@@ -6,6 +6,14 @@
         public EventPayload(BasePayload original) : base(original) { }
 
         public override string Type => "Event";
-        public string EventType { get; set; }
+        public EventType EventType { get; set; }
+    }
+
+    public enum EventType
+    {
+        None,
+        NewProductionOrder,
+        ProductionStarted,
+        ProductionHalted
     }
 }

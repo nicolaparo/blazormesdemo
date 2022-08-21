@@ -10,6 +10,9 @@ using System.Text.Json;
 using Azure.Data.Tables;
 using NicolaParo.BlazorMes.Entities;
 using NicolaParo.BlazorMes.Entities.Payloads;
+using System.Collections.Generic;
+using NicolaParo.BlazorMes.Entities.Models;
+using Azure;
 
 namespace NicolaParo.BlazorMes.EventDispatcher
 {
@@ -27,23 +30,92 @@ namespace NicolaParo.BlazorMes.EventDispatcher
 
             var connectionString = Environment.GetEnvironmentVariable("StorageConnectionString");
 
+            var tableStorage = new TableClientManager(connectionString);
+
+            ProductionOrderEntity order = null;
+
+            try
+            {
+                order = (await tableStorage.Orders.GetEntityAsync<ProductionOrderEntity>("", ProductionOrderEntity.ComputeRowKey(payload.MachineName, payload.ProductionOrder))).Value;
+            }
+            catch (RequestFailedException e) { }
+
+            var now = DateTimeOffset.UtcNow;
+
+            var isNewOrder = order is null;
+            if (isNewOrder)
+            {
+                order = new ProductionOrderEntity(new ProductionOrder()
+                {
+                    CreatedAt = now,
+                    Id = payload.ProductionOrder,
+                    MachineName = payload.MachineName,
+                });
+            }
+
+            order.LastUpdatedAt = now;
+
             if (payload is TelemetryPayload telemetry)
             {
-                var telemetryTable = "telemetry";
-                var tableClient = new TableClient(connectionString, telemetryTable);
-                var entity = TelemetryEntity.FromPayload(telemetry);
-                await SaveDataAsync(tableClient, entity);
+                await StoreEventHistoryAsync(tableStorage.Telemetry, TelemetryEntity.FromPayload(telemetry));
+
+                if (isNewOrder)
+                    order.StartedAt = now;
+
+                order.Goods += telemetry.Goods;
+                order.Rejects += telemetry.Rejects;
             }
             else if (payload is AlarmPayload alarm)
             {
-                var alarmTable = "alarms";
-                var tableClient = new TableClient(connectionString, alarmTable);
-                var entity = AlarmEntity.FromPayload(alarm);
-                await SaveDataAsync(tableClient, entity);
+                await StoreEventHistoryAsync(tableStorage.Alarms, AlarmEntity.FromPayload(alarm));
+
+                if (isNewOrder)
+                    order.StartedAt = now;
+
+                order.LastAlarmAt = now;
+                order.LastAlarmType = alarm.AlarmType;
+            }
+            else if (payload is EventPayload evt)
+            {
+                if (evt.EventType is EventType.NewProductionOrder)
+                {
+                    order.StartedAt = now;
+                }
+            }
+            else
+            {
+                return;
+            }
+
+            await tableStorage.Orders.UpsertEntityAsync(order);
+        }
+
+        public class TableClientManager
+        {
+            private readonly string connectionString;
+            private Dictionary<string, TableClient> tableClients = new();
+
+            public TableClientManager(string connectionString)
+            {
+                this.connectionString = connectionString;
+            }
+
+            public TableClient Alarms => GetTableClient("alarms");
+            public TableClient Orders => GetTableClient("orders");
+            public TableClient Telemetry => GetTableClient("telemetry");
+
+            private TableClient GetTableClient(string tableName)
+            {
+                if (!tableClients.TryGetValue(tableName, out var tableClient))
+                {
+                    tableClient = new TableClient(connectionString, tableName);
+                    tableClients[tableName] = tableClient;
+                }
+                return tableClient;
             }
         }
 
-        private static async Task SaveDataAsync<T>(TableClient tableClient, T tableEntity) where T : ITableEntity
+        private static async Task StoreEventHistoryAsync<T>(TableClient tableClient, T tableEntity) where T : ITableEntity
         {
             try
             {
@@ -62,6 +134,5 @@ namespace NicolaParo.BlazorMes.EventDispatcher
                 }
             }
         }
-
     }
 }

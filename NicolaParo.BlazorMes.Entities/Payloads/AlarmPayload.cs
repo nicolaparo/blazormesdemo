@@ -6,6 +6,16 @@
         public AlarmPayload(BasePayload original) : base(original) { }
 
         public override string Type => "Alarm";
-        public string AlarmType { get; set; }
+        public AlarmType AlarmType { get; set; }
     }
+
+
+    public enum AlarmType
+    {
+        None,
+        EmergencyPushButtonPressed,
+        TemperatureAlertStart,
+        TemperatureAlertEnd,
+    }
+
 }

@@ -1,0 +1,70 @@
+﻿@using NicolaParo.BlazorMes.Entities.Payloads
+@using NicolaParo.BlazorMes.ManagerApp.Services
+
+@implements IDisposable
+
+@inject EventDataReceiver<AlarmPayload> alarmPayloadReceiver
+@inject EventDataReceiver<EventPayload> eventPayloadReceiver
+
+<div class="notification-panel" style="position: fixed; width: 500px; max-width: 90%; bottom: 20px; right: 20px;">
+    @foreach (var notification in notifications)
+    {
+        if (notification is AlarmPayload alarm)
+        {
+            <div class="alert alert-danger">
+                @alarm.AlarmType on @alarm.MachineName for production order @alarm.ProductionOrder
+            </div>
+        }
+
+        if (notification is EventPayload evt)
+        {
+            <div class="alert alert-info">
+                @evt.EventType on @evt.MachineName for production order @evt.ProductionOrder
+            </div>
+        }
+    }
+</div>
+
+@code {
+
+    private List<object> notifications = new();
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+
+        if (firstRender)
+        {
+            alarmPayloadReceiver.OnEvent += OnAlarmReceivedAsync;
+            eventPayloadReceiver.OnEvent += OnEventReceivedAsync;
+        }
+    }
+
+    private async Task OnAlarmReceivedAsync(AlarmPayload alarm)
+    {
+        await AddNotificationAsync(alarm);
+    }
+    private async Task OnEventReceivedAsync(EventPayload evt)
+    {
+        await AddNotificationAsync(evt);
+    }
+
+    private async Task AddNotificationAsync(object notification)
+    {
+        var timer = new Timer((a) =>
+        {
+            notifications.Remove(notification);
+            StateHasChanged();
+        }, null, 5000, Timeout.Infinite);
+
+        notifications.Add(notification);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        alarmPayloadReceiver.OnEvent -= OnAlarmReceivedAsync;
+        eventPayloadReceiver.OnEvent -= OnEventReceivedAsync;
+    }
+
+}

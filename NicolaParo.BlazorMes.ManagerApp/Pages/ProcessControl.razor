@@ -1,0 +1,64 @@
+﻿@page "/process-control"
+@using NicolaParo.BlazorMes.Entities.Models
+@using NicolaParo.BlazorMes.Entities.Payloads
+@using NicolaParo.BlazorMes.ManagerApp.Services
+
+@inject DataRepositoryService repository;
+
+@implements IDisposable
+
+@inject EventDataReceiver<TelemetryPayload> telemetryPayloadReceiver
+
+<div class="row">
+    <div class="col">
+        <label>Machine</label>
+        <select class="form-control" @bind="selectedMachineName">
+            <option>Please Select a Machine</option>
+            @foreach (var machine in productionOrders.Select(m => m.MachineName).Distinct())
+            {
+                <option value="@machine">@machine</option>
+            }
+        </select>
+    </div>
+    <div class="col">
+        <label>Order</label>
+        <select class="form-control" @bind="selectedOrderId">
+            <option>Please Select an Order</option>
+            @foreach (var orderId in productionOrders.Where(o => o.MachineName == selectedMachineName).Select(m => m.Id).Distinct())
+            {
+                <option value="@orderId">@orderId</option>
+            }
+        </select>
+    </div>
+</div>
+
+@code {
+    private string selectedMachineName;
+    private string selectedOrderId;
+
+    private List<TelemetryPayload> telemetryEvents = new();
+    private List<ProductionOrder> productionOrders = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+
+        if (firstRender)
+        {
+            telemetryPayloadReceiver.OnEvent += OnTelemetryReceived;
+            productionOrders.AddRange(await repository.ListOrdersAsync());
+        }
+    }
+
+    private async Task OnTelemetryReceived(TelemetryPayload telemetryPayload)
+    {
+        telemetryEvents.Add(telemetryPayload);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        telemetryPayloadReceiver.OnEvent -= OnTelemetryReceived;
+    }
+
+}

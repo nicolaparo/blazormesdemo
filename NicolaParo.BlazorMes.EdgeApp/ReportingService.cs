@@ -16,7 +16,7 @@ namespace NicolaParo.BlazorMes.EdgeApp
             this.sensors = sensors;
             this.eventSender = eventSender;
             this.sensors.OnAlarm += OnAlarmAsync;
-            this.sensors.OnNewProductionOrder += OnNewProductionOrderAsync;
+            this.sensors.OnEvent += OnEventAsync;
         }
 
         public TimeSpan ReportingFrequency { get; set; } = TimeSpan.FromSeconds(5);
@@ -33,23 +33,26 @@ namespace NicolaParo.BlazorMes.EdgeApp
             var payload = new AlarmPayload
             {
                 Timestamp = DateTimeOffset.UtcNow,
-                AlarmType = alarmType.ToString(),
+                AlarmType = alarmType,
                 ProductionOrder = sensors.ProductionOrder,
                 MachineName = sensors.MachineName,
             };
 
             await eventSender.SendAsync(payload);
         }
-        private async Task OnNewProductionOrderAsync()
+        private async Task OnEventAsync(EventType eventType)
         {
-            lastReportedTotalPieces = 0;
-            lastReportedTotalGoods = 0;
-            lastReportedTotalRejects = 0;
+            if (eventType is EventType.NewProductionOrder)
+            {
+                lastReportedTotalPieces = 0;
+                lastReportedTotalGoods = 0;
+                lastReportedTotalRejects = 0;
+            }
 
             var payload = new EventPayload
             {
                 Timestamp = DateTimeOffset.UtcNow,
-                EventType = "NewProductionOrder",
+                EventType = eventType,
                 ProductionOrder = sensors.ProductionOrder,
                 MachineName = sensors.MachineName,
             };

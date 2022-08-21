@@ -1,0 +1,68 @@
+﻿@page "/orders/{machineName}/{orderId}/details"
+@using NicolaParo.BlazorMes.Entities.Models
+@using NicolaParo.BlazorMes.ManagerApp.Services
+
+@inject BrowserInterop browserInterop;
+@inject DataRepositoryService repository;
+
+<div class="mb-3">
+    <label>Machine Name</label>
+    <div>@order.MachineName</div>
+</div>
+<div class="mb-3">
+    <label>Order Id</label>
+    <div>@order.Id</div>
+</div>
+<div class="mb-3">
+    <label>Customer</label>
+    <div>@order.CustomerName</div>
+</div>
+<div class="mb-3">
+    <label>Target # Items</label>
+    <div>@order.ItemsCount</div>
+</div>
+
+
+@{
+    var goodsPercentage = (order.Goods * 100f / order.ItemsCount).ToString("0.00");
+    var rejectsPercentage = (order.Rejects * 100f / (order.Goods + order.Rejects)).ToString("0.00");
+}
+
+<div class="mb-3">
+    <label>Produced Goods</label>
+    <div>@order.Goods</div>
+    <div class="progress">
+        <div class="progress-bar bg-success" style="width: @goodsPercentage%;">@goodsPercentage %</div>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label>Rejects</label>
+    <div>@order.Rejects</div>
+    <div class="progress">
+        <div class="progress-bar bg-success" style="width: @rejectsPercentage%;">@rejectsPercentage %</div>
+    </div>
+</div>
+
+<div class="mb-3">
+    <button type="button" class="btn btn-secondary" @onclick="() => browserInterop.NavigateBackAsync()">
+        Close
+    </button>
+</div>
+
+@code {
+
+    [Parameter]
+    public string MachineName { get; set; }
+
+    [Parameter]
+    public string OrderId { get; set; }
+
+    private ProductionOrder order;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        order = await repository.GetOrderByIdAsync(MachineName, OrderId);
+    }
+}

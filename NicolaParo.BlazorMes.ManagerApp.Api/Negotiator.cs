@@ -27,5 +27,13 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
         {
             return connection;
         }
+
+        [FunctionName(nameof(NegotiateEvents))]
+        public static WebPubSubConnection NegotiateEvents(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "events/negotiate")] HttpRequest req,
+        [WebPubSubConnection(Hub = "events", Connection = "WebPubSubConnectionString")] WebPubSubConnection connection)
+        {
+            return connection;
+        }
     }
 }
