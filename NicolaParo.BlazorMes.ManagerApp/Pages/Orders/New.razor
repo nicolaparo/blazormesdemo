@@ -1,5 +1,5 @@
 ﻿@page "/orders/new"
-@using NicolaParo.BlazorMes.Entities.Models
+@using NicolaParo.BlazorMes.Models
 @using NicolaParo.BlazorMes.ManagerApp.Components
 @using NicolaParo.BlazorMes.ManagerApp.Services
 
@@ -28,9 +28,5 @@
     {
         var orderId = await repository.CreateOrderAsync(machineName, productionOrderData);
         await browserInterop.NavigateToAsync($"/orders/{machineName}/{orderId}/details", replace: true);
-    }
-    private async Task OnCancelClickedAsync()
-    {
-        await browserInterop.NavigateBackAsync();
     }
 }

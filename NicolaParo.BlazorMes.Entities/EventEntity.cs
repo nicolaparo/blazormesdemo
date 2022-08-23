@@ -4,10 +4,10 @@ using NicolaParo.BlazorMes.Models.Payloads;
 
 namespace NicolaParo.BlazorMes.Entities
 {
-    public record TelemetryEntity : TelemetryPayload, ITableEntity
+    public record EventEntity : EventPayload, ITableEntity
     {
-        public TelemetryEntity() { }
-        public TelemetryEntity(TelemetryPayload data) : base(data) { }
+        public EventEntity() { }
+        public EventEntity(EventPayload data) : base(data) { }
 
         public string PartitionKey { get => ComputePartitionKey(MachineName, ProductionOrder); set { } }
         public new DateTimeOffset? Timestamp { get => base.Timestamp; set => base.Timestamp = value; }
@@ -23,9 +23,10 @@ namespace NicolaParo.BlazorMes.Entities
             return $"{ComputePartitionKey(machineName, productionOrder)}_{timestamp:yyyyMMddHHmmssfff}";
         }
 
-        public static TelemetryEntity FromPayload(TelemetryPayload payload)
+        public static EventEntity FromPayload(EventPayload payload)
         {
-            return new TelemetryEntity(payload);
+            return new EventEntity(payload);
         }
+
     }
 }

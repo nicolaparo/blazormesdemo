@@ -1,4 +1,4 @@
-﻿namespace NicolaParo.BlazorMes.Entities.Payloads
+﻿namespace NicolaParo.BlazorMes.Models.Payloads
 {
     public record EventPayload : BasePayload
     {
@@ -7,13 +7,5 @@
 
         public override string Type => "Event";
         public EventType EventType { get; set; }
-    }
-
-    public enum EventType
-    {
-        None,
-        NewProductionOrder,
-        ProductionStarted,
-        ProductionHalted
     }
 }

@@ -10,14 +10,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NicolaParo.BlazorMes.Entities\NicolaParo.BlazorMes.Entities.csproj" />
+    <ProjectReference Include="..\NicolaParo.BlazorMes.Models\NicolaParo.BlazorMes.Models.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="local.settings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </None>
   </ItemGroup>
 </Project>

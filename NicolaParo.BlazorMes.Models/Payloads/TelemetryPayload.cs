@@ -1,4 +1,4 @@
-﻿namespace NicolaParo.BlazorMes.Entities.Payloads
+﻿namespace NicolaParo.BlazorMes.Models.Payloads
 {
     public record TelemetryPayload : BasePayload
     {
@@ -11,5 +11,6 @@
         public int Rejects { get; set; }
         public double TemperatureCelsius { get; set; }
         public double ConsumptionKW { get; set; }
+        public int TimespanSeconds { get; set; }
     }
 }

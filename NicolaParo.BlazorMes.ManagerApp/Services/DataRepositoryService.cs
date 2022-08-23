@@ -1,6 +1,6 @@
-﻿using NicolaParo.BlazorMes.Entities.Models;
-using NicolaParo.BlazorMes.Entities.Payloads;
-using NicolaParo.BlazorMes.ManagerApp.Extensions;
+﻿using NicolaParo.BlazorMes.ManagerApp.Extensions;
+using NicolaParo.BlazorMes.Models;
+using NicolaParo.BlazorMes.Models.Payloads;
 using System.Text.Json;
 
 namespace NicolaParo.BlazorMes.ManagerApp.Services
@@ -61,39 +61,54 @@ namespace NicolaParo.BlazorMes.ManagerApp.Services
 
         public async Task<TelemetryPayload[]> ListTelemetryAsync(string machineName, string orderId, DateTimeOffset? fromDate = null, DateTimeOffset? toDate = null)
         {
-            var uri = new Uri("telemetry");
+            var builder = new QueryParamBuilder();
 
-            uri = uri.WithQueryParam("machineName", machineName);
-            uri = uri.WithQueryParam("orderId", orderId);
+            builder.Add("machineName", machineName);
+            builder.Add("orderId", orderId);
 
             if (fromDate.HasValue)
-                uri = uri.WithQueryParam("fromDate", fromDate.ToString());
+                builder.Add("fromDate", fromDate.ToString());
 
             if (toDate.HasValue)
-                uri = uri.WithQueryParam("toDate", toDate.ToString());
+                builder.Add("toDate", toDate.ToString());
 
-            var request = new HttpRequestMessage(HttpMethod.Get, uri.ToString());
+            var request = new HttpRequestMessage(HttpMethod.Get, $"telemetry{builder.Build()}");
             var response = await client.SendAsync(request);
             var result = await response.Content.ReadAsJsonAsync<TelemetryPayload[]>();
             return result;
         }
         public async Task<AlarmPayload[]> ListAlarmsAsync(string machineName, string orderId, DateTimeOffset? fromDate = null, DateTimeOffset? toDate = null)
         {
-            var uri = new Uri("alarms");
+            var builder = new QueryParamBuilder();
 
-            uri = uri.WithQueryParam("machineName", machineName);
-            uri = uri.WithQueryParam("orderId", orderId);
+            builder.Add("machineName", machineName);
+            builder.Add("orderId", orderId);
 
             if (fromDate.HasValue)
-                uri = uri.WithQueryParam("fromDate", fromDate.ToString());
+                builder.Add("fromDate", fromDate.ToString());
 
             if (toDate.HasValue)
-                uri = uri.WithQueryParam("toDate", toDate.ToString());
+                builder.Add("toDate", toDate.ToString());
 
-            var request = new HttpRequestMessage(HttpMethod.Get, uri.ToString());
+            var request = new HttpRequestMessage(HttpMethod.Get, $"alarms{builder.Build()}");
             var response = await client.SendAsync(request);
             var result = await response.Content.ReadAsJsonAsync<AlarmPayload[]>();
             return result;
+        }
+
+        public class QueryParamBuilder
+        {
+            private readonly Dictionary<string, string> _fields = new();
+            public QueryParamBuilder Add(string key, string value)
+            {
+                _fields.Add(key, value);
+                return this;
+            }
+            public string Build()
+            {
+                return $"?{String.Join("&", _fields.Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"))}";
+            }
+            public static QueryParamBuilder New => new();
         }
     }
 

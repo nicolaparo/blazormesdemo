@@ -7,20 +7,19 @@ using Microsoft.AspNetCore.Http;
 using Azure.Data.Tables;
 using NicolaParo.BlazorMes.Entities;
 using System.Linq;
-using NicolaParo.BlazorMes.Entities.Payloads;
 using System.Text;
+using NicolaParo.BlazorMes.Models.Payloads;
 
 namespace NicolaParo.BlazorMes.ManagerApp.Api
 {
     public class TelemetryApi
     {
-        private readonly TableClient tableClient;
+        private readonly TableClientManager tableManager;
 
         public TelemetryApi()
         {
             var connectionString = Environment.GetEnvironmentVariable("StorageConnectionString");
-            tableClient = new TableClient(connectionString, "telemetry");
-            tableClient.CreateIfNotExists();
+            tableManager = new TableClientManager(connectionString);
         }
 
         [FunctionName(nameof(GetTelemetryAsync))]
@@ -40,7 +39,7 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
             if (toDate.HasValue)
                 filterBuilder.Append($" and RowKey le '{TelemetryEntity.ComputeRowKey(machineName, orderId, toDate)}'");
 
-            var entities = await tableClient.QueryAsync<TelemetryEntity>(filterBuilder.ToString())
+            var entities = await tableManager.Telemetry.QueryAsync<TelemetryEntity>(filterBuilder.ToString())
                 .AsPages()
                 .Select(x => x.Values)
                 .ToArrayAsync();

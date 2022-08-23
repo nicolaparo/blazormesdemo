@@ -8,15 +8,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Azure.Data.Tables;
-using NicolaParo.BlazorMes.Entities;
-using NicolaParo.BlazorMes.Entities.Payloads;
-using System.Collections.Generic;
-using NicolaParo.BlazorMes.Entities.Models;
 using Azure;
+using NicolaParo.BlazorMes.Entities;
+using NicolaParo.BlazorMes.Models;
+using NicolaParo.BlazorMes.Models.Payloads;
 
 namespace NicolaParo.BlazorMes.EventDispatcher
 {
-    public static class EventPersister
+    public static partial class EventPersister
     {
         [FunctionName(nameof(EventPersister))]
         public static async Task PersistEventAsync(
@@ -62,8 +61,7 @@ namespace NicolaParo.BlazorMes.EventDispatcher
                 if (isNewOrder)
                     order.StartedAt = now;
 
-                order.Goods += telemetry.Goods;
-                order.Rejects += telemetry.Rejects;
+                order.UpdateWith(telemetry);
             }
             else if (payload is AlarmPayload alarm)
             {
@@ -72,15 +70,13 @@ namespace NicolaParo.BlazorMes.EventDispatcher
                 if (isNewOrder)
                     order.StartedAt = now;
 
-                order.LastAlarmAt = now;
-                order.LastAlarmType = alarm.AlarmType;
+                order.UpdateWith(alarm);
             }
             else if (payload is EventPayload evt)
             {
-                if (evt.EventType is EventType.NewProductionOrder)
-                {
-                    order.StartedAt = now;
-                }
+                await StoreEventHistoryAsync(tableStorage.Events, EventEntity.FromPayload(evt));
+
+                order.UpdateWith(evt);
             }
             else
             {
@@ -88,31 +84,6 @@ namespace NicolaParo.BlazorMes.EventDispatcher
             }
 
             await tableStorage.Orders.UpsertEntityAsync(order);
-        }
-
-        public class TableClientManager
-        {
-            private readonly string connectionString;
-            private Dictionary<string, TableClient> tableClients = new();
-
-            public TableClientManager(string connectionString)
-            {
-                this.connectionString = connectionString;
-            }
-
-            public TableClient Alarms => GetTableClient("alarms");
-            public TableClient Orders => GetTableClient("orders");
-            public TableClient Telemetry => GetTableClient("telemetry");
-
-            private TableClient GetTableClient(string tableName)
-            {
-                if (!tableClients.TryGetValue(tableName, out var tableClient))
-                {
-                    tableClient = new TableClient(connectionString, tableName);
-                    tableClients[tableName] = tableClient;
-                }
-                return tableClient;
-            }
         }
 
         private static async Task StoreEventHistoryAsync<T>(TableClient tableClient, T tableEntity) where T : ITableEntity

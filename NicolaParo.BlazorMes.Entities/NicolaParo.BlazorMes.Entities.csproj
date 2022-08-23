@@ -9,4 +9,8 @@
     <PackageReference Include="Azure.Data.Tables" Version="12.6.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\NicolaParo.BlazorMes.Models\NicolaParo.BlazorMes.Models.csproj" />
+  </ItemGroup>
+
 </Project>

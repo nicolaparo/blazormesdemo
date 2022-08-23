@@ -1,4 +1,4 @@
-﻿using NicolaParo.BlazorMes.Entities.Payloads;
+﻿using NicolaParo.BlazorMes.Models.Payloads;
 using System;
 using System.Collections.Generic;
 using System.Linq;

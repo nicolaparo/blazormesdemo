@@ -10,7 +10,7 @@ using System.Text.Json;
 using Azure.Data.Tables;
 using NicolaParo.BlazorMes.Entities;
 using Microsoft.Azure.WebJobs.Extensions.WebPubSub;
-using NicolaParo.BlazorMes.Entities.Payloads;
+using NicolaParo.BlazorMes.Models.Payloads;
 
 namespace NicolaParo.BlazorMes.EventDispatcher
 {

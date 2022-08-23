@@ -1,5 +1,5 @@
 ﻿@page "/orders"
-@using NicolaParo.BlazorMes.Entities.Models
+@using NicolaParo.BlazorMes.Models
 @using NicolaParo.BlazorMes.ManagerApp.Services
 
 @inject DataRepositoryService service;
@@ -14,24 +14,26 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>Machine</th>
                 <th>Order Id</th>
                 <th>Customer</th>
                 <th>Target Items</th>
-                <th>Goods / Rejects</th>
-                <th>Waste</th>
+                <th>Progress</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
             @foreach (var order in orders)
             {
                 <tr>
-                    <td>@order.MachineName</td>
                     <td>@order.Id</td>
                     <td>@order.CustomerName</td>
                     <td>@order.ItemsCount</td>
-                    <td>@order.Goods / @order.Rejects</td>
-                    <td>@((order.Rejects * 100f / (order.Goods + order.Rejects)).ToString("0.00")) %</td>
+                    <td>@order.GetProgressPercentage().ToString("0.00") %</td>
+                    <td>
+                        <button type="button" class="btn btn-primary" @onclick='() => browserInterop.NavigateToAsync($"/orders/{order.MachineName}/{order.Id}/details")'>
+                            <i class="oi oi-magnifying-glass"></i>
+                        </button>
+                    </td>
                 </tr>
             }
         </tbody>

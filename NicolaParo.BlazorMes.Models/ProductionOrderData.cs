@@ -1,7 +1,4 @@
-﻿using Azure;
-using Azure.Data.Tables;
-
-namespace NicolaParo.BlazorMes.Entities.Models
+﻿namespace NicolaParo.BlazorMes.Models
 {
     public record ProductionOrderData
     {

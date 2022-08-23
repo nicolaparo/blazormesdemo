@@ -1,5 +1,51 @@
 ﻿@page "/orders/{machineName}/{orderId}/edit"
+@using NicolaParo.BlazorMes.ManagerApp.Components
+@using NicolaParo.BlazorMes.ManagerApp.Services
+
+@using NicolaParo.BlazorMes.Models
+@inject BrowserInterop browserInterop;
+@inject DataRepositoryService repository;
+
+@if (order is not null)
+{
+    <div class="mb-3">
+        <label>Machine Name</label>
+        <div>@order.MachineName</div>
+    </div>
+    <div class="mb-3">
+        <label>Order Id</label>
+        <div>@order.Id</div>
+    </div>
+    <OrderDataEditor ProductionOrder="order" />
+}
+<div class="mb-3">
+    <button type="button" class="btn btn-secondary" @onclick="() => browserInterop.NavigateBackAsync()">
+        Cancel
+    </button>
+    <button type="button" class="btn btn-primary" @onclick="OnSaveClickedAsync">
+        Save
+    </button>
+</div>
 
 @code {
 
+    [Parameter]
+    public string MachineName { get; set; }
+
+    [Parameter]
+    public string OrderId { get; set; }
+
+    private ProductionOrder order;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        order = await repository.GetOrderByIdAsync(MachineName, OrderId);
+    }
+
+    private async Task OnSaveClickedAsync()
+    {
+        await repository.UpdateOrderAsync(MachineName, OrderId, order);
+        await browserInterop.NavigateToAsync($"/orders/{MachineName}/{OrderId}/details", replace: true);
+    }
 }

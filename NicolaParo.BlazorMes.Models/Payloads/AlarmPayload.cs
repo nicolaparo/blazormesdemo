@@ -1,4 +1,4 @@
-﻿namespace NicolaParo.BlazorMes.Entities.Payloads
+﻿namespace NicolaParo.BlazorMes.Models.Payloads
 {
     public record AlarmPayload : BasePayload
     {
@@ -7,15 +7,6 @@
 
         public override string Type => "Alarm";
         public AlarmType AlarmType { get; set; }
-    }
-
-
-    public enum AlarmType
-    {
-        None,
-        EmergencyPushButtonPressed,
-        TemperatureAlertStart,
-        TemperatureAlertEnd,
     }
 
 }

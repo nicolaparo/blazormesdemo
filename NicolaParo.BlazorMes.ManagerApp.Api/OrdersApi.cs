@@ -7,24 +7,22 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using NicolaParo.BlazorMes.Entities.Models;
 using Azure.Data.Tables;
 using NicolaParo.BlazorMes.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using Azure;
+using NicolaParo.BlazorMes.Models;
 
 namespace NicolaParo.BlazorMes.ManagerApp.Api
 {
     public class OrdersApi
     {
-        private readonly TableClient tableClient;
-
+        private readonly TableClientManager tableManager;
         public OrdersApi()
         {
             var connectionString = Environment.GetEnvironmentVariable("StorageConnectionString");
-            tableClient = new TableClient(connectionString, "orders");
-            tableClient.CreateIfNotExists();
+            tableManager = new TableClientManager(connectionString);
         }
 
         private static async Task<T> ParseRequestBodyAsync<T>(HttpRequest req)
@@ -34,7 +32,7 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
         }
         private static string CreateOrderId()
         {
-            return $"0{DateTimeOffset.Now.ToUnixTimeSeconds():X}";
+            return $"ORD{DateTimeOffset.Now.ToUnixTimeSeconds():X}";
         }
 
         [FunctionName(nameof(CreateOrderAsync))]
@@ -49,7 +47,7 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
                 CreatedAt = DateTimeOffset.Now
             };
 
-            await tableClient.AddEntityAsync(new ProductionOrderEntity(productionOrder));
+            await tableManager.Orders.AddEntityAsync(new ProductionOrderEntity(productionOrder));
 
             return Responses.Ok(productionOrder.Id);
         }
@@ -59,27 +57,23 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
         {
             var body = await ParseRequestBodyAsync<ProductionOrderData>(req);
 
-            var previousOrder = (await tableClient.GetEntityAsync<ProductionOrderEntity>(
+            var previousOrder = (await tableManager.Orders.GetEntityAsync<ProductionOrderEntity>(
                 partitionKey: "", rowKey: ProductionOrderEntity.ComputeRowKey(machineName, orderId)
             )).Value;
 
-            var productionOrder = new ProductionOrder(body) with
-            {
-                Id = previousOrder.Id,
-                MachineName = previousOrder.MachineName,
-                CreatedAt = previousOrder.CreatedAt,
-                LastUpdatedAt = DateTimeOffset.Now
-            };
+            previousOrder.LastUpdatedAt = DateTimeOffset.Now;
+            previousOrder.CustomerName = body.CustomerName;
+            previousOrder.ItemsCount = body.ItemsCount;
 
-            await tableClient.UpdateEntityAsync(new ProductionOrderEntity(productionOrder), ETag.All);
+            await tableManager.Orders.UpdateEntityAsync(new ProductionOrderEntity(previousOrder), ETag.All);
 
-            return Responses.Ok(productionOrder.Id);
+            return Responses.Ok(previousOrder.Id);
         }
 
         [FunctionName(nameof(DeleteOrderAsync))]
         public async Task<IActionResult> DeleteOrderAsync([HttpTrigger(AuthorizationLevel.Function, "delete", Route = "orders/{machineName}/{orderId}")] HttpRequest req, string machineName, string orderId)
         {
-            await tableClient.DeleteEntityAsync(
+            await tableManager.Orders.DeleteEntityAsync(
                 partitionKey: "", rowKey: ProductionOrderEntity.ComputeRowKey(machineName, orderId)
             );
 
@@ -89,7 +83,7 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
         [FunctionName(nameof(GetOrdersAsync))]
         public async Task<IActionResult> GetOrdersAsync([HttpTrigger(AuthorizationLevel.Function, "get", Route = "orders")] HttpRequest req)
         {
-            var entities = await tableClient.QueryAsync<ProductionOrderEntity>()
+            var entities = await tableManager.Orders.QueryAsync<ProductionOrderEntity>()
                 .AsPages()
                 .Select(x => x.Values)
                 .ToArrayAsync();
@@ -100,7 +94,7 @@ namespace NicolaParo.BlazorMes.ManagerApp.Api
         [FunctionName(nameof(GetOrderByIdAsync))]
         public async Task<IActionResult> GetOrderByIdAsync([HttpTrigger(AuthorizationLevel.Function, "get", Route = "orders/{machineName}/{orderId}")] HttpRequest req, string machineName, string orderId)
         {
-            var entity = (await tableClient.GetEntityAsync<ProductionOrderEntity>(
+            var entity = (await tableManager.Orders.GetEntityAsync<ProductionOrderEntity>(
                 partitionKey: "", rowKey: ProductionOrderEntity.ComputeRowKey(machineName, orderId)
             )).Value;
             return Responses.Ok(((ProductionOrder)entity) with { });

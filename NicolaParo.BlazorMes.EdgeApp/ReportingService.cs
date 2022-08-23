@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Devices.Client;
 using NicolaParo.BlazorMes.EdgeApp.Services;
-using NicolaParo.BlazorMes.Entities.Payloads;
+using NicolaParo.BlazorMes.Models;
+using NicolaParo.BlazorMes.Models.Payloads;
 using System.Text;
 using System.Text.Json;
 
@@ -78,6 +79,7 @@ namespace NicolaParo.BlazorMes.EdgeApp
                 MachineName = sensors.MachineName,
                 TemperatureCelsius = sensors.TemperatureCelsius,
                 ConsumptionKW = sensors.ConsumptionKW,
+                TimespanSeconds = (int)ReportingFrequency.TotalSeconds,
             };
 
             lastReportedTotalPieces = totalPieces;

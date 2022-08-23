@@ -1,6 +1,5 @@
-﻿namespace NicolaParo.BlazorMes.Entities.Payloads
+﻿namespace NicolaParo.BlazorMes.Models.Payloads
 {
-
     public abstract record BasePayload
     {
         public abstract string Type { get; }

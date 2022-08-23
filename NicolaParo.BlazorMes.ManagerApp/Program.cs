@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using NicolaParo.BlazorMes.Entities.Payloads;
 using NicolaParo.BlazorMes.ManagerApp;
 using NicolaParo.BlazorMes.ManagerApp.Services;
+using NicolaParo.BlazorMes.Models.Payloads;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 

@@ -1,4 +1,4 @@
-﻿using NicolaParo.BlazorMes.Entities.Payloads;
+﻿using NicolaParo.BlazorMes.Models;
 
 namespace NicolaParo.BlazorMes.EdgeApp
 {
@@ -65,6 +65,10 @@ namespace NicolaParo.BlazorMes.EdgeApp
             if (IsRunning() && productionOrderSet)
             {
                 productionOrderSet = false;
+
+                currentTotalPieces = 0;
+                TotalRejects = 0;
+
                 if (OnEvent != null)
                     await OnEvent.Invoke(EventType.NewProductionOrder);
             }

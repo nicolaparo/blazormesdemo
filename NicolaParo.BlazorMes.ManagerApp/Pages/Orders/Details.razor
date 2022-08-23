@@ -1,52 +1,199 @@
 ﻿@page "/orders/{machineName}/{orderId}/details"
-@using NicolaParo.BlazorMes.Entities.Models
 @using NicolaParo.BlazorMes.ManagerApp.Services
 
+@using NicolaParo.BlazorMes.Models
+@using NicolaParo.BlazorMes.Models.Payloads
 @inject BrowserInterop browserInterop;
 @inject DataRepositoryService repository;
 
-<div class="mb-3">
-    <label>Machine Name</label>
-    <div>@order.MachineName</div>
-</div>
-<div class="mb-3">
-    <label>Order Id</label>
-    <div>@order.Id</div>
-</div>
-<div class="mb-3">
-    <label>Customer</label>
-    <div>@order.CustomerName</div>
-</div>
-<div class="mb-3">
-    <label>Target # Items</label>
-    <div>@order.ItemsCount</div>
-</div>
+
+@inject EventDataReceiver<AlarmPayload> alarmPayloadReceiver
+@inject EventDataReceiver<TelemetryPayload> telemetryPayloadReceiver
+@inject EventDataReceiver<EventPayload> eventPayloadReceiver
 
 
-@{
-    var goodsPercentage = (order.Goods * 100f / order.ItemsCount).ToString("0.00");
-    var rejectsPercentage = (order.Rejects * 100f / (order.Goods + order.Rejects)).ToString("0.00");
+@if (order is not null)
+{
+    var goodsPercentage = order.GetProgressPercentage().ToString("0.00");
+    var rejectsPercentage = order.GetWastePercentage().ToString("0.00");
+
+    <h2>Info</h2>
+    <div class="mb-3">
+        <label>Machine Name</label>
+        <div>@order.MachineName</div>
+    </div>
+    <div class="mb-3">
+        <label>Order Id</label>
+        <div>@order.Id</div>
+    </div>
+    <div class="mb-3">
+        <label>Customer</label>
+        <div>@order.CustomerName</div>
+    </div>
+    <div class="mb-3">
+        <label>Target # Items</label>
+        <div>@order.ItemsCount</div>
+    </div>
+
+    <h2>Production</h2>
+    <div class="mb-3">
+        <label>Good</label>
+        <div>@order.Goods</div>
+
+        @if (order.ItemsCount <= 0)
+        {
+            <div class="progress">
+                <div class="progress-bar  progress-bar-striped progress-bar-animated bg-success" style="width: 100%;"></div>
+            </div>
+        }
+        else
+        {
+            <div class="progress">
+                <div class="progress-bar bg-success" style="width: @goodsPercentage%;">@goodsPercentage %</div>
+            </div>
+        }
+    </div>
+    <div class="mb-3">
+        <label>Rejects</label>
+        <div>@order.Rejects</div>
+        @if (order.TotalProducedItems <= 0)
+        {
+            <div class="progress">
+            </div>
+        }
+        else
+        {
+            <div class="progress">
+                <div class="progress-bar bg-danger" style="width: @rejectsPercentage%;">@rejectsPercentage %</div>
+            </div>
+        }
+    </div>
+    <div class="mb-3">
+        <label>Total Produced Items</label>
+        <div>@order.TotalProducedItems</div>
+    </div>
+
+    <div class="mb-3">
+        <label>Started At</label>
+        @if (order.StartedAt.HasValue)
+        {
+            <div>
+                @order.StartedAt
+            </div>
+        }
+        else
+        {
+            <div>
+                <em>Not Started Yet</em>
+            </div>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label>Completed At</label>
+        @if (order.CompletedAt.HasValue)
+        {
+            <div>
+                @order.CompletedAt
+            </div>
+        }
+        else if (order.StartedAt.HasValue)
+        {
+            <div>
+                <em>In Progress</em>
+            </div>
+        }
+        else
+        {
+            <div>
+                <em>Not Started Yet</em>
+            </div>
+        }
+    </div>
+
+
+    <div class="mb-3">
+        <label>Production Time</label>
+        <div>
+            @order.GetProductionTime().ToString(@"dd\.hh\:mm\:ss")
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label>Total Duration</label>
+        <div>
+            @order.GetDuration().ToString(@"dd\.hh\:mm\:ss")
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label>Efficiency</label>
+        <div>
+            @order.GetEfficiencyPercentage().ToString("0.00") %
+        </div>
+    </div>
+
+    <h2>Costs</h2>
+
+    <div class="mb-3">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Raw Material</th>
+                    <td>@order.GetRawMaterialCost().ToString("0.00") €</td>
+                </tr>
+                <tr>
+                    <th>Energy</th>
+                    <td>@order.GetEnergyCost().ToString("0.00") €</td>
+                </tr>
+                <tr>
+                    <th>Employees</th>
+                    <td>@order.GetEmployeesCost().ToString("0.00") €</td>
+                </tr>
+                <tr>
+                    <th>Total</th>
+                    <td><strong>@order.GetTotalCost().ToString("0.00") €</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Alarms</h2>
+
+    @if (alarms is not null)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Alarm</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var alarm in alarms.OrderByDescending(a => a.Timestamp))
+                {
+                    <tr>
+                        <td>@alarm.Timestamp</td>
+                        <td>@alarm.AlarmType</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 }
-
-<div class="mb-3">
-    <label>Produced Goods</label>
-    <div>@order.Goods</div>
-    <div class="progress">
-        <div class="progress-bar bg-success" style="width: @goodsPercentage%;">@goodsPercentage %</div>
-    </div>
-</div>
-
-<div class="mb-3">
-    <label>Rejects</label>
-    <div>@order.Rejects</div>
-    <div class="progress">
-        <div class="progress-bar bg-success" style="width: @rejectsPercentage%;">@rejectsPercentage %</div>
-    </div>
-</div>
 
 <div class="mb-3">
     <button type="button" class="btn btn-secondary" @onclick="() => browserInterop.NavigateBackAsync()">
         Close
+    </button>
+    <button type="button" class="btn btn-secondary" @onclick="OnEditClickedAsync">
+        Edit
     </button>
 </div>
 
@@ -59,10 +206,69 @@
     public string OrderId { get; set; }
 
     private ProductionOrder order;
+    private List<TelemetryPayload> telemetry = new();
+    private List<AlarmPayload> alarms = new();
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        order = await repository.GetOrderByIdAsync(MachineName, OrderId);
+
+        await Task.WhenAll(
+            (((Func<Task>)(async () => { order = await repository.GetOrderByIdAsync(MachineName, OrderId); })).Invoke()),
+            (((Func<Task>)(async () => { telemetry.AddRange(await repository.ListTelemetryAsync(MachineName, OrderId)); })).Invoke()),
+            (((Func<Task>)(async () => { alarms.AddRange(await repository.ListAlarmsAsync(MachineName, OrderId)); })).Invoke())
+        );
+    }
+
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+
+        if (firstRender)
+        {
+            alarmPayloadReceiver.OnEvent += OnAlarmReceivedAsync;
+            eventPayloadReceiver.OnEvent += OnEventReceivedAsync;
+            telemetryPayloadReceiver.OnEvent += OnTelemetryReceivedAsync;
+        }
+    }
+
+    private async Task OnAlarmReceivedAsync(AlarmPayload alarm)
+    {
+        if (alarm.MachineName == order.MachineName && alarm.ProductionOrder == order.Id)
+        {
+            alarms.Add(alarm);
+            order.UpdateWith(alarm);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task OnTelemetryReceivedAsync(TelemetryPayload alarm)
+    {
+        if (alarm.MachineName == order.MachineName && alarm.ProductionOrder == order.Id)
+        {
+            telemetry.Add(alarm);
+            order.UpdateWith(alarm);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task OnEventReceivedAsync(EventPayload evt)
+    {
+        if (evt.MachineName == order.MachineName && evt.ProductionOrder == order.Id)
+        {
+            order.UpdateWith(evt);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        alarmPayloadReceiver.OnEvent -= OnAlarmReceivedAsync;
+        eventPayloadReceiver.OnEvent -= OnEventReceivedAsync;
+        telemetryPayloadReceiver.OnEvent -= OnTelemetryReceivedAsync;
+    }
+
+    private async Task OnEditClickedAsync()
+    {
+        await browserInterop.NavigateToAsync($"/orders/{MachineName}/{OrderId}/edit", replace: true);
     }
 }
